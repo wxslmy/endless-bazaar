@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Bazaar 黑盒撮合系统</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .section { margin-bottom: 25px; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #2980b9; }
+        #matchResult { margin-top: 20px; padding: 15px; border-radius: 4px; background: #ecf0f1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Endless Blockchain B2B 黑盒撮合系统</h1>
+        
+        <!-- 供应商信息录入 -->
+        <div class="section">
+            <h2>供应商信息</h2>
+            <input type="text" id="supplierName" placeholder="供应商名称（加密存储）">
+            <input type="number" id="supplierPrice" placeholder="报价（单位：Endless Token）">
+            <select id="supplierCategory">
+                <option value="">选择商品品类</option>
+                <option value="hardware">区块链硬件</option>
+                <option value="software">区块链软件</option>
+                <option value="service">技术服务</option>
+            </select>
+            <button onclick="addSupplier()">添加供应商</button>
+        </div>
+
+        <!-- 采购商信息录入 -->
+        <div class="section">
+            <h2>采购商信息</h2>
+            <input type="text" id="buyerName" placeholder="采购商名称（加密存储）">
+            <input type="number" id="buyerBudget" placeholder="预算（单位：Endless Token）">
+            <select id="buyerCategory">
+                <option value="">选择需求品类</option>
+                <option value="hardware">区块链硬件</option>
+                <option value="software">区块链软件</option>
+                <option value="service">技术服务</option>
+            </select>
+            <button onclick="match()">开始撮合</button>
+        </div>
+
+        <!-- 撮合结果展示 -->
+        <div id="matchResult"></div>
+    </div>
+
+    <script>
+        // 模拟加密存储的供应商池（链上数据映射）
+        let supplierPool = [];
+
+        // 加密处理函数（模拟Endless区块链加密逻辑）
+        function encryptData(data) {
+            return btoa(data + "-endless-chain-" + new Date().getTime());
+        }
+
+        // 添加供应商（信息加密后存入池）
+        function addSupplier() {
+            const name = document.getElementById("supplierName").value;
+            const price = Number(document.getElementById("supplierPrice").value);
+            const category = document.getElementById("supplierCategory").value;
+
+            if (!name || !price || !category) {
+                alert("请填写完整供应商信息！");
+                return;
+            }
+
+            // 加密存储核心信息，仅暴露匹配所需的非敏感数据
+            supplierPool.push({
+                id: encryptData(name),
+                price: price,
+                category: category,
+                encryptName: encryptData(name)
+            });
+
+            alert("供应商信息已加密录入撮合池！");
+            document.getElementById("supplierName").value = "";
+            document.getElementById("supplierPrice").value = "";
+            document.getElementById("supplierCategory").value = "";
+        }
+
+        // 黑盒撮合核心逻辑（基于品类+价格匹配，不泄露双方原始信息）
+        function match() {
+            const buyerBudget = Number(document.getElementById("buyerBudget").value);
+            const buyerCategory = document.getElementById("buyerCategory").value;
+            const buyerName = document.getElementById("buyerName").value;
+
+            if (!buyerName || !buyerBudget || !buyerCategory) {
+                alert("请填写完整采购商信息！");
+                return;
+            }
+
+            // 筛选同品类且报价≤预算的供应商
+            const matchedSuppliers = supplierPool.filter(s => 
+                s.category === buyerCategory && s.price <= buyerBudget
+            );
+
+            // 按报价从低到高排序
+            matchedSuppliers.sort((a, b) => a.price - b.price);
+
+            const resultEl = document.getElementById("matchResult");
+            if (matchedSuppliers.length === 0) {
+                resultEl.innerHTML = `<h3>撮合结果：无匹配供应商</h3><p>未找到${buyerCategory}品类中报价≤${buyerBudget} Endless Token的供应商</p >`;
+                return;
+            }
+
+            // 仅展示加密ID和报价，不泄露真实名称（黑盒核心）
+            let resultHtml = `<h3>撮合成功！匹配到${matchedSuppliers.length}家供应商</h3>`;
+            matchedSuppliers.forEach((s, index) => {
+                resultHtml += `<p>${index+1}. 供应商加密ID：${s.encryptName} | 报价：${s.price} Endless Token</p >`;
+            });
+            resultHtml += `<p>采购商可通过Endless区块链智能合约发起交易对接</p >`;
+            resultEl.innerHTML = resultHtml;
+        }
+    </script>
+</body>
+</html>
